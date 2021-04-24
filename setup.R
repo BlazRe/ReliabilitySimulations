@@ -7,7 +7,7 @@ Sys.setlocale("LC_ALL","Croatian")
 required_packages<-c("psy", "psych", "Lambda4", "purrr", "GPArotation")
 lapply(required_packages, require, character.only = TRUE)
 
-# Calculate the different reliability coefficients - safe omega total
+# Calculate reliability coefficients - safe omega total
 mu2 <- function(x) {mu2 = psych::tenberge(x)$mu2}
 calc_relaibilities_safe <- function(x, decimals=4) {
   alpha <- psy::cronbach(x)$alpha
@@ -40,25 +40,25 @@ run_sim<-function(conditions, iqr_cutoffs, replications){
     N<-conditions[i,"N"]
     # For each replication
     for (j in 1:replications){
-      # Make truescores
+      # Createe true scores
       xt<-rnorm(N,0,1)
       pop_t<-truescoredf(xt,k)
-      # Add errors
+      # Add measurement errors
       pop_e<-errorsdf_ort(k,alpha_pop,N)
       pop_x<-pop_t+pop_e
-      # apply distribution shape
+      # Reshape the distribution
       pop_x<-reshape(pop_x,dist)
-      # Replace outliars
+      # Replace the outliers
       # pop_x<-scale(pop_x)
       iqr_cutoff<-iqr_cutoffs[dist]
-      ro<-rep_outliars(pop_x, iqr_cutoff)
+      ro<-rep_outliers(pop_x, iqr_cutoff)
       pop_x<-ro[[1]]
-      # divide continuous variables into categories
+      # Categorize the continuous variables
       cat_x<-categorize(pop_x, categ)
-      # calculate reliabilities
+      # Calculate the coefficients
       mat[j,]<-calc_relaibilities_safe(cat_x)
     }
-    # save in a list
+    # Save as a list
     sim[[i]]<-mat
     print(i)
   }
@@ -66,8 +66,8 @@ run_sim<-function(conditions, iqr_cutoffs, replications){
   return(l)
 }
 
-# Helper functions
-# Headrick polynomial transform to introduce skew and kurtosis
+# Support functions
+# Headrick polynomial transform to introduce skewness and kurtosis
 transform_6params <- function(x,p0,p1,p2,p3,p4,p5){
   x<-scale(x)
   y <- p0 + p1*x + p2*x^2 + p3*x^3 + p4*x^4 + p5*x^5
@@ -98,26 +98,26 @@ reshape<-function(df,dist){
   return(dft)
 }
 
-# Create data frame of true scores for different number of items
+# Create data frame of true scores per each test length level
 truescoredf<-function(xt, k){
   v<-rep(xt, k)
   df<-data.frame(matrix(v,ncol=k))
   return(df)
 }
 
-### Spearman-Brown solve for reliability of one item based on desired alpha_pop and k
+### Spearman-Brown formula for reliability of an item based on population reliability and test length
 rel_single<-function(k, alpha_pop){
   rs<--alpha_pop/((alpha_pop*k)-alpha_pop-k)
   return(rs)
 }
 
-### Calculate standard deviation of the error to be added to truescore
+### Calculate standard deviation of the measurement error to be added to true score
 errorize<-function(rel_s){
   var_err<-(1/rel_s)-1
   sd_err<-sqrt(var_err)
   return(sd_err)
 }
-### Generate errors for one item
+### Generate measurement error for one item
 errors_one<-function(k,alpha_pop,pop.size){
   rs<-rel_single(k,alpha_pop)
   sde<-errorize(rs)
@@ -125,13 +125,13 @@ errors_one<-function(k,alpha_pop,pop.size){
   return(err)
 }
 
-# Generate data frame of errors for different number of items
+# Generate data frame of measurement errors per test length level
 errorsdf<-function(k,alpha_pop,pop.size){
   edf<-as.data.frame(replicate(k,errors_one(k,alpha_pop,pop.size)))
   return(edf)
 }
 
-# Generate data frame of orthogonal errors for different number of items
+# Generate data frame of orthogonal measurement errors per test length level
 errorsdf_ort<-function(k,alpha_pop,pop.size){
   rs<-rel_single(k,alpha_pop)
   sde<-errorize(rs)
@@ -142,8 +142,8 @@ errorsdf_ort<-function(k,alpha_pop,pop.size){
   return(edf)
 }
 
-# Replace outliars with border values based on IQR
-rep_outliars<-function(df, iqr_cutoff=1.5){
+# Replace outliers with IQR limits
+rep_outliers<-function(df, iqr_cutoff=1.5){
   lcount<-rep(NA,ncol(df))
   hcount<-rep(NA,ncol(df))
   for (i in 1:ncol(df)){
@@ -161,7 +161,7 @@ rep_outliars<-function(df, iqr_cutoff=1.5){
   return(lr)
 }
 
-# Cut continuous variables in a number of discreet categories
+# Categorize the continous variables
 categorize<-function(df,categ){
   dfc<-df
   dfc[]<-NA

@@ -10,7 +10,7 @@ dist<-c("norm","asim1","asim2","plat","lept")
 categ<-c(3,5,7,9)
 N<-c(50,100,200,500,1000)
 
-# Combine conditions into control object
+# Combine conditions into the control object
 cond_list<-list(k,categ,N,dist,alpha_pop)
 conditions<-expand.grid(cond_list)
 names(conditions)<-c("k","categ","N","dist","alpha_pop")
@@ -24,7 +24,7 @@ conditions<-data.frame(conditions,desc_cond)
 # Set seed
 set.seed(100)
 
-# Initiate simulation and measure the time
+# Initiate simulation and estimate the elapsed time
 start.time <- Sys.time()
 sim100<-run_sim(conditions, iqr_cutoffs, replications)
 end.time <- Sys.time()
